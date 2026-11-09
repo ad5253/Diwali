@@ -22,7 +22,10 @@ export async function onRequest({ request, env }) {
 
       if (b.set) {
         const k = String(b.set.key), v = String(b.set.value);
-        if (/^(day1|diwali):\d{4}$/.test(k)) { if (!isDate(v)) return J({ error: 'bad date' }, 400); }
+        if (/^dt:\d{4}-\d{2}-\d{2}$/.test(k)) {
+          if (v === '') { await db.prepare('DELETE FROM settings WHERE key=?').bind(k).run(); return J({ ok: true }); }
+          if (!okAmt(Number(v))) return J({ error: 'bad target' }, 400);
+        } else if (/^(day1|diwali):\d{4}$/.test(k)) { if (!isDate(v)) return J({ error: 'bad date' }, 400); }
         else if (/^target:\d{4}$/.test(k)) { if (!okAmt(Number(v))) return J({ error: 'bad target' }, 400); }
         else return J({ error: 'bad key' }, 400);
         await db.prepare('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(k, v).run();
